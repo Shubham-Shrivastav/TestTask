@@ -63,9 +63,14 @@ const Featcher = () => {
                 const charactersWithSpecies = await Promise.all(
                     allData.map(async (character) => {
                         if (character.species.length > 0) {
-                            const speciesResult = await fetch(character.species[0]);
-                            const speciesData = await speciesResult.json();
-                            return { ...character, speciesData };
+                            try {
+                                const speciesResult = await fetch(character.species[0]);
+                                const speciesData = await speciesResult.json();
+                                return { ...character, speciesData };
+                            } catch (error) {
+                                console.error('Error fetching species:', error);
+                                return { ...character, speciesData: null };
+                            }
                         }
                         return character;
                     })
@@ -150,17 +155,19 @@ const Featcher = () => {
                             </TableHead>
                             <TableBody sx={{ minWidth: 650 }} size="small">
                                 {sortedData
-                                    .filter((item) =>
-                                        item.name.toLowerCase().includes(search)
-                                    )
+                                    .filter((item) => item.name.toLowerCase().includes(search))
                                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                     .map((person, index) => (
                                         <TableRow key={index}>
                                             {columns.map((column) => (
                                                 <TableCell key={column.id}>
-                                                    {column.id === 'icon'
-                                                        ? speciesIcon(person.speciesData)
-                                                        : person[column.id]}
+                                                    {column.id === 'species'
+                                                        ? person.speciesData
+                                                            ? person.speciesData.name
+                                                            : 'Unknown'
+                                                        : column.id === 'icon'
+                                                            ? speciesIcon(person.speciesData)
+                                                            : person[column.id]}
                                                 </TableCell>
                                             ))}
                                         </TableRow>
