@@ -47,31 +47,37 @@ const Featcher = () => {
 
     useEffect(() => {
         const fetchAllData = async () => {
-            setLoading(true);
-            let allData = [];
-            let nextPage = 'https://swapi.dev/api/people/';
+            try {
+                setLoading(true);
+                let allData = [];
+                let nextPage = 'https://swapi.dev/api/people/';
 
-            while (nextPage) {
-                const result = await fetch(nextPage);
-                const data = await result.json();
-                allData = allData.concat(data.results);
+                while (nextPage) {
+                    const result = await fetch(nextPage);
+                    const data = await result.json();
+                    allData = allData.concat(data.results);
 
-                nextPage = data.next;
+                    nextPage = data.next;
+                }
+
+                const charactersWithSpecies = await Promise.all(
+                    allData.map(async (character) => {
+                        if (character.species.length > 0) {
+                            const speciesResult = await fetch(character.species[0]);
+                            const speciesData = await speciesResult.json();
+                            return { ...character, speciesData };
+                        }
+                        return character;
+                    })
+                );
+
+                setData(charactersWithSpecies);
+                setLoading(false);
             }
-
-            const charactersWithSpecies = await Promise.all(
-                allData.map(async (character) => {
-                    if (character.species.length > 0) {
-                        const speciesResult = await fetch(character.species[0]);
-                        const speciesData = await speciesResult.json();
-                        return { ...character, speciesData };
-                    }
-                    return character;
-                })
-            );
-
-            setData(charactersWithSpecies);
-            setLoading(false);
+            catch (error) {
+                console.error('Error fetching data:', error);
+                setLoading(false);
+            }
         };
 
         fetchAllData();
